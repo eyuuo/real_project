@@ -1,0 +1,221 @@
+ #include <DHT.h>
+#include <ESP8266WiFi.h>
+
+const char* ssid = "260";
+const char* password = "123456789";
+#define D0 16
+#define D1 5
+#define D2 4
+#define D3 0
+#define D4 16
+
+#define LIGHT_PIN A0
+#define LED_PIN D0
+#define LED_PIN2 D1
+#define LED_PIN3 D2
+#define LED_PIN4 D3
+
+//#define RELAY1_PIN D1
+
+#define LED_ON 0
+#define LED_OFF 1
+
+int light_value;
+
+WiFiServer server(80);
+
+//2/7
+void drawmenu(WiFiClient &pclient){
+  pclient.println("HTTP/1.1 200 OK");
+  pclient.println("Content-Type: text/html");
+  pclient.println("");
+
+   pclient.println("<!DOCTYPE HTML>");
+   pclient.println("<html>");
+   pclient.println("<head>");
+   pclient.println("<title>NodeMCU Control</title>");
+   pclient.println("<meta name='viewport' content='width=device-width, user-scalable=no'>");
+   pclient.println("</head>");
+   pclient.println("<body>");
+   pclient.println("<div style='width: 300px; margin: auto; text-align:center;'>");
+  // pclient.println("<h1>Welcone to Handong Global University</h1>");
+   pclient.println("<h2>NodeMCU Web Server</h2>");
+   pclient.print("<h3>");
+   pclient.print(WiFi.localIP());
+   pclient.println("</h3>");
+   pclient.println("<p>");
+   pclient.println("</p>");
+   pclient.println("<p>");
+   pclient.println("LED1 : "); 
+   pclient.println("</p>");
+   pclient.println("<a href=\"/LED/ON1\"\"><button>LED On </button></a>");
+   pclient.println("<a href=\"/LED/OFF1\"\"><button>LED Off </button></a><br/>");
+    pclient.println("<p>");
+   pclient.println("LED2 :");
+   pclient.println("</p>");
+   pclient.println("<a href=\"/LED/ON2\"\"><button>LED2 On </button></a>");
+   pclient.println("<a href=\"/LED/OFF2\"\"><button>LED2 Off </button></a><br/>");
+      pclient.println("<p>");
+   pclient.println("LED3 :");
+   pclient.println("</p>");
+   pclient.println("<a href=\"/LED/ON3\"\"><button>LED3 On </button></a>");
+   pclient.println("<a href=\"/LED/OFF3\"\"><button>LED3 Off </button></a><br/>");
+      pclient.println("<p>");
+   pclient.println("LED4 :");
+   pclient.println("</p>");
+   pclient.println("<a href=\"/LED/ON4\"\"><button>LED4 On </button></a>");
+   pclient.println("<a href=\"/LED/OFF4\"\"><button>LED4 Off </button></a><br/>");
+         pclient.println("<p>");
+   pclient.println("AutoMode :");
+   pclient.println("</p>");
+   pclient.println("<a href=\"/LED/AUTO/ON\"\"><button>Auto On </button></a>");
+   pclient.println("<a href=\"/LED/AUTO/OFF\"\"><button>Auto Off </button></a><br/>");
+   pclient.println("<p>");
+   pclient.println("Light intensity : "); pclient.println(light_value);
+   pclient.println("</p>");
+   pclient.println("</div>");
+   pclient.println("</body>");
+   pclient.println("</html>");
+}
+//4/7
+void setup() {
+
+//시리얼 통신 설정
+  Serial.begin(9600);
+  delay(100);
+//핀 설정
+
+  
+  pinMode(LIGHT_PIN, INPUT);
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(LED_PIN2, OUTPUT);
+  pinMode(LED_PIN3, OUTPUT);
+  pinMode(LED_PIN4, OUTPUT);
+  
+//connect to wifi my network;
+Serial.println("\n\n");
+Serial.println("Connecting to ");
+Serial.println(ssid);
+WiFi.mode(WIFI_STA);
+WiFi.begin(ssid, password);
+
+
+//5/7
+while (WiFi.status() != WL_CONNECTED) {
+   delay(500);
+  Serial.println("not WL");//
+}
+
+Serial.println("");
+Serial.println("WiFi Connected");
+
+server.begin();
+Serial.println("Server started");
+
+Serial.println("Use this URL to connect: ");
+Serial.print("http://");
+Serial.print(WiFi.localIP());
+Serial.print("/");
+
+}//end of setup
+ 
+void loop() {
+  WiFiClient client = server.available();
+  if(!client) {
+    return;
+  }
+
+  //7/7
+  light_value = analogRead(LIGHT_PIN);
+
+Serial.println("new client");
+while(!client.available()){
+  delay(1);
+}
+
+String request = client.readStringUntil('\r');
+Serial.println(request);
+client.flush();
+
+
+if(request.indexOf("/LED/ON1") != -1){
+  digitalWrite(LED_PIN, LED_ON);
+}
+if(request.indexOf("/LED/OFF1") != -1){
+  digitalWrite(LED_PIN, LED_OFF);
+}
+//
+if(request.indexOf("/LED/ON2") != -1){
+  digitalWrite(LED_PIN2, LED_ON);
+}
+if(request.indexOf("/LED/OFF2") != -1){
+  digitalWrite(LED_PIN2, LED_OFF);
+}
+if(request.indexOf("/LED/ON3") != -1){
+  digitalWrite(LED_PIN3, LED_ON);
+}
+if(request.indexOf("/LED/OFF3") != -1){
+  digitalWrite(LED_PIN3, LED_OFF);
+}
+if(request.indexOf("/LED/ON4") != -1){
+  digitalWrite(LED_PIN4, LED_ON);
+}
+if(request.indexOf("/LED/OFF4") != -1){
+  digitalWrite(LED_PIN4, LED_OFF);
+}
+
+if(request.indexOf("/LED/AUTO/ON") != -1)
+{
+//while(request.indexOf("/LED/AUTO/ON") != -1)
+  { 
+  //drawmenu(client);
+   // delay(300);  
+ // light_value = analogRead(LIGHT_PIN);
+ // if(request.indexOf("/LED/AUTO/OFF") != -1){
+ //  break;  
+ // }
+   if(light_value<85){
+   digitalWrite(LED_PIN, LED_ON);
+   digitalWrite(LED_PIN2, LED_ON);
+   digitalWrite(LED_PIN3, LED_ON);
+   digitalWrite(LED_PIN4, LED_ON);
+  }
+  if(light_value<175 && light_value>=85 ){
+   digitalWrite(LED_PIN2, LED_ON);
+   digitalWrite(LED_PIN3, LED_ON);
+   digitalWrite(LED_PIN4, LED_ON);
+   digitalWrite(LED_PIN, LED_OFF);
+  }
+ if(light_value<202 && light_value>=175 ){
+   digitalWrite(LED_PIN3, LED_ON);
+   digitalWrite(LED_PIN4, LED_ON);
+   digitalWrite(LED_PIN, LED_OFF);
+   digitalWrite(LED_PIN2, LED_OFF);
+  }
+  if(light_value>=202)
+  {
+   digitalWrite(LED_PIN4, LED_ON);
+   digitalWrite(LED_PIN, LED_OFF);
+   digitalWrite(LED_PIN2, LED_OFF);
+   digitalWrite(LED_PIN3, LED_OFF);
+  }
+  }//while
+}
+if(request.indexOf("/LED/AUTO/OFF") != -1){
+  digitalWrite(LED_PIN, LED_OFF);
+  digitalWrite(LED_PIN2, LED_OFF);
+  digitalWrite(LED_PIN3, LED_OFF);
+  digitalWrite(LED_PIN4, LED_OFF);
+}
+ //delay(300); 
+//82~84
+//134
+//198~201
+//205~207
+
+drawmenu(client);
+delay(1);
+Serial.println("Client disconnected");
+Serial.print("");
+}
+  
